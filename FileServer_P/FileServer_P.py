@@ -8,7 +8,6 @@ from random import choice
 FileServer_P = SimpleXMLRPCServer(('localhost', 9001), logRequests=True, allow_none=True)
 
 def write(filename, data, primary):
-    print("Got")
     file = open(filename, "w")
     if file:
         file.write(data)
