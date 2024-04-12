@@ -20,13 +20,13 @@ def lock(filename):
                 break
 
         if file_exists:
-            for row in worksheet.iter_rows():
+            for row in worksheet.iter_rows(min_row=2, values_only=True):
                 if row[1].value == filename:
                     if row[4].value == "unlocked":
                         row[4].value = "locked"
                         addr = row[2].value
                         port = row[3].value
-                        # Save the changes to the Excel file
+
                         workbook.save(excel_file)
                         return True, addr, port
                     else:
@@ -36,7 +36,7 @@ def lock(filename):
             if os.path.exists(server_file):
                 server_workbook = openpyxl.load_workbook(server_file)
                 server_worksheet = server_workbook.active
-                server_rows = list(server_worksheet.iter_rows(values_only=True))
+                server_rows = list(server_worksheet.iter_rows(min_row = 2,values_only=True))
                 chosen_server = choice(server_rows)
                 addr = chosen_server[1]
                 port = chosen_server[2]
@@ -50,6 +50,24 @@ def lock(filename):
     else:
         return False, None, None
 
+def unlock(filename):
+    excel_file = "Primary_Metadata.xlsx"
+
+    if os.path.exists(excel_file):
+        workbook = openpyxl.load_workbook(excel_file)
+        worksheet = workbook.active
+
+        for row in worksheet.iter_rows():
+            print(row[1].value)
+            if row[1].value == filename:
+                row[4].value = "unlocked"
+                workbook.save(excel_file)
+                return True
+        return False
+    else:
+        return False
+
+
 def write(filename):
     success, addr, port = lock(filename)
     if success:
@@ -61,5 +79,7 @@ def generate_id():
     return len(openpyxl.load_workbook("Primary_Metadata.xlsx").active['A']) + 1
 
 masterServer.register_function(write, 'write')
+masterServer.register_function(lock, 'lock')
+masterServer.register_function(unlock, 'unlock')
 print("Master server is running...")
 masterServer.serve_forever()
