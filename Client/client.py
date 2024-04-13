@@ -17,6 +17,8 @@ def write_file(filename):
             print(f"Data written to {filename}")
         else:
             print(f"Failed to write data to {filename}")
+    else:
+        print(f"File {filename} is locked by another client.")
 
 if __name__ == "__main__":
     filename = input("Enter the filename: ")
