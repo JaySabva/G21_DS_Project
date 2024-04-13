@@ -55,6 +55,14 @@ def write(filename):
     else:
         return False, None, None
 
+def read(filename):
+    read_servers = []
+    if filename in backup_servers:
+        for addr, port in backup_servers[filename]:
+            read_servers.append((addr, port))
+
+    return read_servers
+
 def generate_id():
     return len(primary_metadata) + 1
 
@@ -82,6 +90,7 @@ load_servers()
 load_primary_metadata()
 
 masterServer.register_function(write, 'write')
+masterServer.register_function(read, 'read')
 masterServer.register_function(lock, 'lock')
 masterServer.register_function(unlock, 'unlock')
 masterServer.register_function(send_backup_servers, 'send_backup_servers')
