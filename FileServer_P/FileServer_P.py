@@ -39,7 +39,15 @@ def write(filename, data, primary):
 
     return True
 
+def read(filename):
+    if os.path.exists(filename):
+        with open(filename, 'r') as file:
+            return file.read()
+    else:
+        return False
+
 FileServer_P.register_function(write, "write")
+FileServer_P.register_function(read, "read")
 
 print("FileServer_P running on localhost:9001")
 FileServer_P.serve_forever()
