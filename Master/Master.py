@@ -1,72 +1,52 @@
 import os
 import openpyxl
 from random import choice
-from socket import *
 from xmlrpc.server import SimpleXMLRPCServer
 
+primary_metadata = {}
+servers_metadata = {}
+backup_servers = {}
 masterServer = SimpleXMLRPCServer(('localhost', 9000), logRequests=True, allow_none=True)
 
-def lock(filename):
-    excel_file = "Primary_Metadata.xlsx"
+def send_backup_servers(backup):
+    for server in backup:
+        filename = server[0]
+        addr = server[1]
+        port = server[2]
+        print(filename, addr, port)
 
-    if os.path.exists(excel_file):
-        workbook = openpyxl.load_workbook(excel_file)
-        worksheet = workbook.active
-
-        file_exists = False
-        for row in worksheet.iter_rows(values_only=True):
-            if row[1] == filename:
-                file_exists = True
-                break
-
-        if file_exists:
-            for row in worksheet.iter_rows(min_row=2, values_only=True):
-                if row[1].value == filename:
-                    if row[4].value == "unlocked":
-                        row[4].value = "locked"
-                        addr = row[2].value
-                        port = row[3].value
-
-                        workbook.save(excel_file)
-                        return True, addr, port
-                    else:
-                        return False, None, None
+        if filename in backup_servers:
+            backup_servers[filename].add((addr, port))  # Add the (addr, port) tuple to the set
         else:
-            server_file = "Servers.xlsx"
-            if os.path.exists(server_file):
-                server_workbook = openpyxl.load_workbook(server_file)
-                server_worksheet = server_workbook.active
-                server_rows = list(server_worksheet.iter_rows(min_row = 2,values_only=True))
-                chosen_server = choice(server_rows)
-                addr = chosen_server[1]
-                port = chosen_server[2]
+            backup_servers[filename] = {(addr, port)}   # Initialize a new set with the (addr, port) tuple
 
-                worksheet.append([generate_id(), filename, addr, port, "locked"])
-                workbook.save(excel_file)
+    print(backup_servers)
 
-                return True, addr, port
-            else:
-                return False, None, None
+def lock(filename):
+    if filename in primary_metadata:
+        if primary_metadata[filename]["status"] == "unlocked":
+            primary_metadata[filename]["status"] = "locked"
+            return True, primary_metadata[filename]["addr"], primary_metadata[filename]["port"]
+        else:
+            return False, None, None
     else:
-        return False, None, None
+        server_data = choice(list(servers_metadata.values()))
+        primary_metadata[filename] = {
+            "id": generate_id(),
+            "addr": server_data["addr"],
+            "port": server_data["port"],
+            "status": "locked"
+        }
+        print(primary_metadata)
+        return True, server_data["addr"], server_data["port"]
 
 def unlock(filename):
-    excel_file = "Primary_Metadata.xlsx"
-
-    if os.path.exists(excel_file):
-        workbook = openpyxl.load_workbook(excel_file)
-        worksheet = workbook.active
-
-        for row in worksheet.iter_rows():
-            print(row[1].value)
-            if row[1].value == filename:
-                row[4].value = "unlocked"
-                workbook.save(excel_file)
-                return True
-        return False
+    print(primary_metadata)
+    if filename in primary_metadata:
+        primary_metadata[filename]["status"] = "unlocked"
+        return True
     else:
         return False
-
 
 def write(filename):
     success, addr, port = lock(filename)
@@ -76,10 +56,34 @@ def write(filename):
         return False, None, None
 
 def generate_id():
-    return len(openpyxl.load_workbook("Primary_Metadata.xlsx").active['A']) + 1
+    return len(primary_metadata) + 1
+
+def load_servers():
+    server_file = "Servers.xlsx"
+    if os.path.exists(server_file):
+        workbook = openpyxl.load_workbook(server_file)
+        worksheet = workbook.active
+        for row in worksheet.iter_rows(min_row=2, values_only=True):
+            name, addr, port = row
+            servers_metadata[name] = {"addr": addr, "port": port}
+    else:
+        print("Servers.xlsx file not found.")
+
+def load_primary_metadata():
+    primary_metadata_file = "Primary_Metadata.xlsx"
+    if os.path.exists(primary_metadata_file):
+        workbook = openpyxl.load_workbook(primary_metadata_file)
+        worksheet = workbook.active
+        for row in worksheet.iter_rows(min_row=2, values_only=True):
+            filename, addr, port, status = row
+            primary_metadata[filename] = {"addr": addr, "port": port, "status": status}
+
+load_servers()
+load_primary_metadata()
 
 masterServer.register_function(write, 'write')
 masterServer.register_function(lock, 'lock')
 masterServer.register_function(unlock, 'unlock')
+masterServer.register_function(send_backup_servers, 'send_backup_servers')
 print("Master server is running...")
 masterServer.serve_forever()
