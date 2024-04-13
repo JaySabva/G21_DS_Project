@@ -6,8 +6,8 @@ from random import choice
 
 FileServer_P = SimpleXMLRPCServer(('localhost', 9001), logRequests=True, allow_none=True)
 
-def write(filename, data, primary):
-    mode = 'a' if os.path.exists(filename) else 'w'
+def write(filename, data, primary, flag):
+    mode = 'a' if (os.path.exists(filename) and flag == True) else 'w'
     with open(filename, mode) as file:
         file.write(data + "\n")
 
@@ -25,7 +25,7 @@ def write(filename, data, primary):
                     addr = row[1]
                     port = row[2]
                     proxy = xmlrpc.client.ServerProxy(f"http://{addr}:{port}/", allow_none=True)
-                    response = proxy.write(filename, data, False)
+                    response = proxy.write(filename, data, False, mode == 'a')
 #                     print(response)
                     if response:
                         backup_servers.append((filename, addr, port))
