@@ -1,6 +1,6 @@
 import xmlrpc.client
 
-def write_file(filename):
+def write_file(filename, mode):
     proxy = xmlrpc.client.ServerProxy("http://localhost:9000/", allow_none=True)
     response = proxy.write(filename)
     print(response)
@@ -11,7 +11,7 @@ def write_file(filename):
         proxy1 = xmlrpc.client.ServerProxy(f"http://{addr}:{port}/", allow_none=True)
         data = input("Enter the data to write to the file: ")
 
-        response = proxy1.write(filename, data, True)
+        response = proxy1.write(filename, data, True, mode == 'a')
         if response:
             unlock = proxy.unlock(filename)
             print(f"Data written to {filename}")
@@ -41,7 +41,8 @@ def read_file(filename):
 
 if __name__ == "__main__":
     filename = input("Enter the filename to write: ")
-    write_file(filename)
+    mode = input("Enter 'w' for write or 'a' for append: ")
+    write_file(filename, mode)
 
 #     add functionality for reading the file
     filename = input("Enter the filename to read: ")
