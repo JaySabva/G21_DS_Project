@@ -2,11 +2,15 @@ import os
 import openpyxl
 from random import choice
 from xmlrpc.server import SimpleXMLRPCServer
+import threading
 
 primary_metadata = {}
 servers_metadata = {}
 backup_servers = {}
 masterServer = SimpleXMLRPCServer(('localhost', 9000), logRequests=True, allow_none=True)
+
+# Dictionary to store mutex locks for each file
+mutex_locks = {}
 
 def send_backup_servers(backup):
     for server in backup:
@@ -23,11 +27,16 @@ def send_backup_servers(backup):
     print(backup_servers)
 
 def lock(filename):
+    # Acquire mutex lock for the file
+    mutex_locks.setdefault(filename, threading.Lock()).acquire()
+
     if filename in primary_metadata:
         if primary_metadata[filename]["status"] == "unlocked":
             primary_metadata[filename]["status"] = "locked"
             return True, primary_metadata[filename]["addr"], primary_metadata[filename]["port"]
         else:
+            # Release mutex lock if failed to lock
+            mutex_locks[filename].release()
             return False, None, None
     else:
         server_data = choice(list(servers_metadata.values()))
@@ -37,17 +46,21 @@ def lock(filename):
             "port": server_data["port"],
             "status": "locked"
         }
-        print(primary_metadata)
+        # Release mutex lock if file not found
+        mutex_locks[filename].release()
         return True, server_data["addr"], server_data["port"]
 
 def unlock(filename):
-    print(primary_metadata)
-    if filename in primary_metadata:
+    if filename in primary_metadata and primary_metadata[filename]["status"] == "locked":
         primary_metadata[filename]["status"] = "unlocked"
+        # Release the mutex lock only if it's locked
+        mutex_locks[filename].release()
         return True
     else:
         return False
 
+
+# Function to handle write requests
 def write(filename):
     success, addr, port = lock(filename)
     if success:
@@ -60,7 +73,6 @@ def read(filename):
     if filename in backup_servers:
         for addr, port in backup_servers[filename]:
             read_servers.append((addr, port))
-
     return read_servers
 
 def generate_id():
@@ -94,5 +106,6 @@ masterServer.register_function(read, 'read')
 masterServer.register_function(lock, 'lock')
 masterServer.register_function(unlock, 'unlock')
 masterServer.register_function(send_backup_servers, 'send_backup_servers')
+
 print("Master server is running...")
 masterServer.serve_forever()
