@@ -12,6 +12,7 @@ def write(filename, data, primary):
         file.write(data + "\n")
 
     if primary:
+        backup_servers = []
         print("Sending data to backup servers")
         server_file = "Servers.xlsx"
         if os.path.exists(server_file):
@@ -24,10 +25,19 @@ def write(filename, data, primary):
                     addr = row[1]
                     port = row[2]
                     proxy = xmlrpc.client.ServerProxy(f"http://{addr}:{port}/", allow_none=True)
-                    proxy.write(filename, data, False)
+                    response = proxy.write(filename, data, False)
+#                     print(response)
+                    if response:
+                        backup_servers.append((filename, addr, port))
         else:
             return False
+
+#         print(backup_servers)
+        master_proxy = xmlrpc.client.ServerProxy("http://localhost:9000/", allow_none=True)
+        master_proxy.send_backup_servers(backup_servers)
         return True
+
+    return True
 
 FileServer_P.register_function(write, "write")
 
