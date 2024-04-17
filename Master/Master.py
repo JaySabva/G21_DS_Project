@@ -2,42 +2,34 @@ import os
 import openpyxl
 from random import choice
 from xmlrpc.server import SimpleXMLRPCServer
-import threading
+import time
 
 primary_metadata = {}
 servers_metadata = {}
 backup_servers = {}
 masterServer = SimpleXMLRPCServer(('localhost', 9000), logRequests=True, allow_none=True)
 
-# Dictionary to store mutex locks for each file
-mutex_locks = {}
-
 def send_backup_servers(backup):
     for server in backup:
         filename = server[0]
         addr = server[1]
         port = server[2]
-        print(filename, addr, port)
+        timestamp = server[3]
 
         if filename in backup_servers:
-            backup_servers[filename].add((addr, port))  # Add the (addr, port) tuple to the set
+            backup_servers[filename].add((addr, port, timestamp))
         else:
-            backup_servers[filename] = {(addr, port)}   # Initialize a new set with the (addr, port) tuple
+            backup_servers[filename] = {(addr, port, timestamp)}
 
     print(backup_servers)
 
 def lock(filename):
-    # Acquire mutex lock for the file
-    mutex_locks.setdefault(filename, threading.Lock()).acquire()
-
     if filename in primary_metadata:
         if primary_metadata[filename]["status"] == "unlocked":
             primary_metadata[filename]["status"] = "locked"
-            return True, primary_metadata[filename]["addr"], primary_metadata[filename]["port"]
+            return True, primary_metadata[filename]["addr"], primary_metadata[filename]["port"], time.time()
         else:
-            # Release mutex lock if failed to lock
-            mutex_locks[filename].release()
-            return False, None, None
+            return False, None, None, None
     else:
         server_data = choice(list(servers_metadata.values()))
         primary_metadata[filename] = {
@@ -46,32 +38,26 @@ def lock(filename):
             "port": server_data["port"],
             "status": "locked"
         }
-        # Release mutex lock if file not found
-        mutex_locks[filename].release()
-        return True, server_data["addr"], server_data["port"]
+        return True, server_data["addr"], server_data["port"], time.time()
 
 def unlock(filename):
     if filename in primary_metadata and primary_metadata[filename]["status"] == "locked":
         primary_metadata[filename]["status"] = "unlocked"
-        # Release the mutex lock only if it's locked
-        mutex_locks[filename].release()
         return True
     else:
         return False
 
-
-# Function to handle write requests
 def write(filename):
-    success, addr, port = lock(filename)
+    success, addr, port, timestamp = lock(filename)
     if success:
-        return True, addr, port
+        return True, addr, port, timestamp
     else:
-        return False, None, None
+        return False, None, None, None
 
 def read(filename):
     read_servers = []
     if filename in backup_servers:
-        for addr, port in backup_servers[filename]:
+        for addr, port, timestamp in backup_servers[filename]:
             read_servers.append((addr, port))
     return read_servers
 
