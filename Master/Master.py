@@ -7,7 +7,9 @@ import time
 primary_metadata = {}
 servers_metadata = {}
 backup_servers = {}
-masterServer = SimpleXMLRPCServer(('localhost', 9000), logRequests=True, allow_none=True)
+
+hostID = "192.168.6.6"
+masterServer = SimpleXMLRPCServer((hostID, 9000), logRequests=True, allow_none=True)
 
 def send_backup_servers(backup):
     for server in backup:
