@@ -1,12 +1,15 @@
 import xmlrpc.client
 
+# Define global variable for the IP address
+SERVER_IP = "192.168.6.6"
+
 def write_file(filename, mode):
-    proxy = xmlrpc.client.ServerProxy("http://localhost:9000/", allow_none=True)
+    proxy = xmlrpc.client.ServerProxy(f"http://{SERVER_IP}:9000/")
     response = proxy.write(filename)
     if response[0]:
         addr = response[1]
         port = response[2]
-        proxy1 = xmlrpc.client.ServerProxy(f"http://{addr}:{port}/", allow_none=True)
+        proxy1 = xmlrpc.client.ServerProxy(f"http://{SERVER_IP}:{port}/")
         data = input("Enter the data to write to the file: ")
         response = proxy1.write(filename, data, True, mode == 'a', response[3])  # Include timestamp
         if response:
@@ -18,13 +21,13 @@ def write_file(filename, mode):
         print(f"File {filename} is locked by another client.")
 
 def read_file(filename):
-    proxy = xmlrpc.client.ServerProxy("http://localhost:9000/", allow_none=True)
+    proxy = xmlrpc.client.ServerProxy(f"http://{SERVER_IP}:9000/", allow_none=True)
     response = proxy.read(filename)
     if response:
         for server in response:
             addr = server[0]
             port = server[1]
-            proxy1 = xmlrpc.client.ServerProxy(f"http://{addr}:{port}/", allow_none=True)
+            proxy1 = xmlrpc.client.ServerProxy(f"http://{SERVER_IP}:{port}/", allow_none=True)
             data = proxy1.read(filename)
             if data:
                 print(f"Data in {filename}:")
@@ -35,7 +38,7 @@ def read_file(filename):
     else:
         print(f"File {filename} not found.")
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     while True:
         print("\nSelect an option:")
         print("1. Write to a file")
