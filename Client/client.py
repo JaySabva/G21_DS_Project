@@ -38,7 +38,7 @@ def read_file(filename):
     else:
         print(f"File {filename} not found.")
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     while True:
         print("\nSelect an option:")
         print("1. Write to a file")
@@ -50,6 +50,10 @@ if _name_ == "_main_":
         if choice == '1':
             filename = input("Enter the filename to write: ")
             mode = input("Enter 'w' for write or 'a' for append: ")
+            while (mode != 'w') and (mode != 'a'):
+                print("Invalid mode. Please enter 'w' or 'a'.")
+                mode = input("Enter 'w' for write or 'a' for append: ")
+                continue
             write_file(filename, mode)
         elif choice == '2':
             filename = input("Enter the filename to read: ")
