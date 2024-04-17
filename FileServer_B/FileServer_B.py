@@ -5,8 +5,8 @@ import openpyxl
 import threading
 import heapq
 
-# Change the server address and port for FileServer B
-FileServer_B = SimpleXMLRPCServer(('localhost', 9002), logRequests=True, allow_none=True)
+hostID = "192.168.6.6"
+FileServer_B = SimpleXMLRPCServer((hostID, 9002), logRequests=True, allow_none=True)
 
 class MinHeap:
     def __init__(self):
@@ -46,7 +46,7 @@ def send_to_backups(filename, data, mode, timestamp):
         server_rows = list(server_worksheet.iter_rows(values_only=True))
         for row in server_rows[1:]:
             if row[2] != 9002:  # Exclude FileServer B's port from backups
-                addr = row[1]
+                addr = hostID
                 port = row[2]
                 if (addr, port) not in server_heap:
                     server_heap[(addr, port)] = MinHeap()
@@ -66,7 +66,7 @@ def send_to_backups(filename, data, mode, timestamp):
         return False
 
     # Send information about backup servers to the master server
-    master_proxy = xmlrpc.client.ServerProxy("http://localhost:9000/", allow_none=True)
+    master_proxy = xmlrpc.client.ServerProxy(f"http://{hostID}:9000/", allow_none=True)
     master_proxy.send_backup_servers(backup_servers)
 
     return True
