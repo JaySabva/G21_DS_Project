@@ -99,8 +99,47 @@ def read(filename):
     else:
         return False
 
+def getMyUpdate():
+    print("getMyUpdate called")
+    server_rows = list(server_worksheet.iter_rows(values_only=True))
+    for row in server_rows[1:]:
+        addr = hostID
+        port = row[2]
+        if port != 9001:
+            try:
+                proxy = xmlrpc.client.ServerProxy(f"http://{addr}:{port}/", allow_none=True)
+                response = proxy.sendUpdate(addr, 9001)
+                for update in response:
+                    filename, data, mode, timestamp = update
+                    print(filename, data, mode, timestamp)
+                    write(filename, data, False, mode == 'a', timestamp)
+                print("getMyUpdate done")
+            except Exception as e:
+                print(f"Error connecting to {addr}:{port}: {e}")
+
+def sendUpdate(addr, port):
+    print(f"Sending update to {addr}:{port}")
+    updates = []
+    if (addr, port) in server_heap and not server_heap[(addr, port)].empty():
+        while not server_heap[(addr, port)].empty():
+            timestamp, filename, data, mode = server_heap[(addr, port)].pop()
+            updates.append((filename, data, mode, timestamp))
+
+    return updates
+
+def initialize_getMyUpdate():
+    global getMyUpdate_executed
+    if not getMyUpdate_executed:
+        getMyUpdate()
+        getMyUpdate_executed = True
+
+getMyUpdate_executed = False
+initialize_getMyUpdate()
+
 FileServer_P.register_function(write, "write")
 FileServer_P.register_function(read, "read")
+FileServer_P.register_function(getMyUpdate, "getMyUpdate")
+FileServer_P.register_function(sendUpdate, "sendUpdate")
 
 print("FileServer_P running on localhost:9001")
 FileServer_P.serve_forever()
