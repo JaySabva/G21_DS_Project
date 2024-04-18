@@ -25,6 +25,12 @@ class MinHeap:
         return len(self.heap) == 0
 
 server_heap = {}
+server_file = "Servers.xlsx"  # Assuming Servers.xlsx contains backup server details
+if os.path.exists(server_file):
+    server_workbook = openpyxl.load_workbook(server_file)
+    server_worksheet = server_workbook.active
+else:
+    print("Server file not found!")
 
 def write(filename, data, primary, flag, timestamp=None):
     mode = 'a' if (os.path.exists(filename) and flag) else 'w'
@@ -39,10 +45,7 @@ def write(filename, data, primary, flag, timestamp=None):
 def send_to_backups(filename, data, mode, timestamp):
     backup_servers = []
     print("Sending data to backup servers")
-    server_file = "Servers.xlsx"  # Assuming Servers.xlsx contains backup server details
     if os.path.exists(server_file):
-        server_workbook = openpyxl.load_workbook(server_file)
-        server_worksheet = server_workbook.active
         server_rows = list(server_worksheet.iter_rows(values_only=True))
         for row in server_rows[1:]:
             if row[2] != 9002:  # Exclude FileServer B's port from backups
