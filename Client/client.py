@@ -11,32 +11,42 @@ def write_file(filename, mode):
         port = response[2]
         proxy1 = xmlrpc.client.ServerProxy(f"http://{SERVER_IP}:{port}/")
         data = input("Enter the data to write to the file: ")
-        response = proxy1.write(filename, data, True, mode == 'a', response[3])  # Include timestamp
-        if response:
+        try:
+            response = proxy1.write(filename, data, True, mode == 'a', response[3])  # Include timestamp
+            if response:
+                unlock = proxy.unlock(filename)
+                print(f"Data written to {filename}")
+            else:
+                print(f"Failed to write data to {filename}")
+        except Exception as e:
             unlock = proxy.unlock(filename)
-            print(f"Data written to {filename}")
-        else:
-            print(f"Failed to write data to {filename}")
+            print(f"Error occurred while writing to {filename}: {e} - Primary server is down.")
     else:
         print(f"File {filename} is locked by another client.")
 
 def read_file(filename):
     proxy = xmlrpc.client.ServerProxy(f"http://{SERVER_IP}:9000/", allow_none=True)
-    response = proxy.read(filename)
-    if response:
-        for server in response:
-            addr = server[0]
-            port = server[1]
-            proxy1 = xmlrpc.client.ServerProxy(f"http://{SERVER_IP}:{port}/", allow_none=True)
-            data = proxy1.read(filename)
-            if data:
-                print(f"Data in {filename}:")
-                print(data)
-                break
+    try:
+        response = proxy.read(filename)
+        if response:
+            for server in response:
+                addr = server[0]
+                port = server[1]
+                proxy1 = xmlrpc.client.ServerProxy(f"http://{SERVER_IP}:{port}/", allow_none=True)
+                try:
+                    data = proxy1.read(filename)
+                    if data:
+                        print(f"Data in {filename}:")
+                        print(data)
+                        break
+                except Exception as e:
+                    print(f"Backup server {addr}:{port} is down. trying another backup server.")
+            else:
+                print(f"Data in {filename} not found. - Backup servers are down.")
         else:
-            print(f"Data in {filename} not found.")
-    else:
-        print(f"File {filename} not found.")
+            print(f"File {filename} not found.")
+    except Exception as e:
+        print(f"Error occurred while accessing {filename}: {e}")
 
 if __name__ == "__main__":
     while True:
