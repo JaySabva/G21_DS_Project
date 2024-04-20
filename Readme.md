@@ -109,7 +109,8 @@ pip install openpyxl xmlrpc
   ```
 - Open the `client.py` file and set the `hostID` variable:
   ```python
-  SERVER_IP = "<your-ip-address>"  # Set the host IP address here (else set it as localhost)
+  SERVER_IP = "<server's-ip-address>"  # Set the host IP address here (else set it as localhost)
+  right now, we have hardcoded this ip variables.
   ```
 - Run the client application:
   ```
