@@ -123,8 +123,8 @@ pip install openpyxl xmlrpc
 - Follow the on-screen instructions to interact with the system.
 
 ### Demo
-- For a demonstration of the project in action, check out the YouTube demo [here](https://www.youtube.com/watch?v=your-demo-video-link).
-
+- For a demonstration of the project in action, check out the YouTube demo [here](https://www.youtube.com/watch?v=fWT-LpADB7s).
+[![https://www.youtube.com/watch?v=fWT-LpADB7s](https://img.youtube.com/vi/fWT-LpADB7s/0.jpg)](https://www.youtube.com/watch?v=fWT-LpADB7s)
 ### Screenshots
 - **Write Operation - Flow:**
 
