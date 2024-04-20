@@ -125,8 +125,26 @@ pip install openpyxl xmlrpc
 - For a demonstration of the project in action, check out the YouTube demo [here](https://www.youtube.com/watch?v=your-demo-video-link).
 
 ### Screenshots
-- Screenshots of the system interface and operations are available in the `screenshots` directory.
+- **Write Operation - Flow:**
 
+  ![Write Operation](./Images/WRITE.png)
+
+- **Read Operation - Flow:**
+
+  ![Read Operation](./Images/READ.png)
+
+- **Master Server:**
+
+  ![Master Server](./Images/Master.png)
+- **FileServer_P:**
+
+  ![FileServer_P](./Images/FileServer_P.png)
+- **FileServer_B:**
+
+  ![FileServer_B](./Images/FileServer_B.png)
+- **Client:**
+
+  ![Client](./Images/Client.png)
 ### Contributors
 - Upadhyay Meet Shaileshbhai
 - Sabva Jay Dilipbhai
