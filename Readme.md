@@ -1,4 +1,4 @@
-# Remote File Operation System
+# Remote File Operation System - G2
 ## IT559 - Distributed Systems Project (Group 2)
 This project implements a system for remote file operations, allowing clients to read from and write to files stored on remote servers. The system utilizes distributed architecture to ensure data integrity and availability.
 
